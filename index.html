@@ -190,18 +190,21 @@
             </div>
             <div id="viewModalContent" class="p-6 overflow-y-auto space-y-6 flex-grow text-sm"></div>
             <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex flex-wrap justify-between items-center gap-2">
-                <div class="flex items-center space-x-2">
-                    <button type="button" onclick="downloadOrderImage()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition flex items-center shadow-sm">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="copyLineTextSummary()" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition flex items-center shadow-sm" title="ก๊อปปี้ข้อความพร้อมส่ง LINE">
+                        <i class="fa-solid fa-copy mr-1.5"></i>คัดลอกข้อความส่ง LINE
+                    </button>
+                    <button type="button" onclick="downloadOrderImage()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium transition flex items-center shadow-sm">
                         <i class="fa-solid fa-download mr-1.5"></i>ดาวน์โหลดรูป
                     </button>
                     <button type="button" onclick="editOrderFromView()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition flex items-center shadow-sm">
                         <i class="fa-solid fa-pen mr-1.5"></i>แก้ไข
                     </button>
                     <button type="button" onclick="confirmOrderFromView()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition flex items-center shadow-sm">
-                        <i class="fa-solid fa-circle-check mr-1.5"></i>คอนเฟิร์ม (ยืนยันออเดอร์)
+                        <i class="fa-solid fa-circle-check mr-1.5"></i>คอนเฟิร์ม
                     </button>
                 </div>
-                <button onclick="closeViewModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition text-xs">ปิดหน้าต่าง</button>
+                <button onclick="closeViewModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition text-xs">ปิด</button>
             </div>
         </div>
     </div>
@@ -273,22 +276,19 @@
                         </div>
                     </div>
 
-                    <!-- ส่วนแนบรูปภาพ / เปิดกล้องถ่ายภาพ (บังคับเปิดกล้องทันที) -->
+                    <!-- ส่วนแนบรูปภาพ / เปิดกล้องถ่ายภาพ -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                         <label class="block text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
                             <i class="fa-solid fa-camera text-amber-500"></i>
                             <span>รูปภาพประกอบออร์เดอร์ / สลิป (กดเปิดกล้องถ่าย หรือเลือกอัลบั้ม)</span>
                         </label>
                         <div class="flex flex-wrap items-center gap-2">
-                            <!-- ปุ่มเปิดกล้องถ่ายภาพทันที (บังคับเปิดแอปกล้องมือถือ/เว็บบ์แคม) -->
                             <button type="button" onclick="triggerDirectCamera()" class="cursor-pointer bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center space-x-2 shadow-sm">
                                 <i class="fa-solid fa-camera-retro"></i>
                                 <span>เปิดกล้องถ่ายรูป</span>
                             </button>
-                            <!-- Input ซ่อนสำหรับกล้องมือถือ -->
                             <input type="file" id="orderCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
 
-                            <!-- ปุ่มเลือกรูปจากแกลเลอรี/อัลบั้ม -->
                             <label class="cursor-pointer bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center space-x-2 shadow-sm">
                                 <i class="fa-solid fa-images"></i>
                                 <span>เลือกรูปจากอัลบั้ม</span>
@@ -318,7 +318,7 @@
         </div>
     </div>
 
-    <!-- Modal: WebCam Live View (สำหรับคอมพิวเตอร์หรือเบราว์เซอร์ที่ไม่มีกล้อง Native) -->
+    <!-- Modal: WebCam Live View -->
     <div id="webcamModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-center">
             <h3 class="font-bold text-lg text-slate-900">ถ่ายภาพด้วยกล้อง</h3>
@@ -350,29 +350,19 @@
         </div>
     </div>
 
-    <!-- Modal: Image Lightbox (พร้อมปุ่มเลื่อนซ้าย-ขวา และตัวนับรูป) -->
+    <!-- Modal: Image Lightbox -->
     <div id="imageModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden" onclick="closeImageModal()">
         <div class="relative max-w-5xl max-h-[90vh] flex items-center justify-center w-full h-full" onclick="event.stopPropagation()">
-            
-            <!-- รูปภาพหลัก -->
             <img id="modalLargeImage" src="" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-slate-700 bg-slate-900">
-            
-            <!-- ปุ่มปิด -->
             <button onclick="closeImageModal()" class="absolute top-2 right-2 sm:-top-4 sm:-right-4 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg transition z-20">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-
-            <!-- ปุ่มเลื่อนซ้าย -->
             <button id="prevImageBtn" onclick="prevImage(event)" class="absolute left-2 sm:-left-6 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-lg transition z-20 border border-slate-600">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-
-            <!-- ปุ่มเลื่อนขวา -->
             <button id="nextImageBtn" onclick="nextImage(event)" class="absolute right-2 sm:-right-6 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-lg transition z-20 border border-slate-600">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
-
-            <!-- ป้ายแสดงลำดับภาพ (เช่น 1 / 3) -->
             <div id="imageCounterBadge" class="absolute bottom-2 bg-slate-900/80 border border-slate-700 text-slate-200 px-4 py-1.5 rounded-full text-xs font-mono tracking-wider shadow-md">
                 1 / 1
             </div>
@@ -388,11 +378,11 @@
         let currentViewOrderId = null;
         let deleteTargetId = null;
         let previousOrderCount = -1;
-        let currentOrderImages = []; // เก็บภาพที่แนบในฟอร์ม
+        let currentOrderImages = [];
 
-        let activeGalleryImages = []; // เก็บรายการรูปทั้งหมดใน Lightbox
-        let currentImageIndex = 0;    // ตำแหน่งรูปปัจจุบันใน Lightbox
-        let webcamStream = null;      // สตรีมกล้องเว็บแคมสำหรับคอมพิวเตอร์
+        let activeGalleryImages = [];
+        let currentImageIndex = 0;    
+        let webcamStream = null;      
 
         window.onload = function() {
             checkLoginSession();
@@ -547,17 +537,12 @@
             if (matchedCust) nameInput.value = matchedCust.name; 
         }
 
-        // --- ระบบเปิดกล้องถ่ายภาพทันที (รองรับทั้งมือถือและ PC) ---
         function triggerDirectCamera() {
             const cameraInput = document.getElementById('orderCameraInput');
-            // ตรวจสอบว่าเป็นมือถือหรืออุปกรณ์ที่รองรับ Native capture หรือไม่
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
             if (isMobile) {
-                // บนมือถือ สั่งคลิก input ที่มี capture="environment" เพื่อเปิดกล้องหลังทันที
                 cameraInput.click();
             } else {
-                // บนคอมพิวเตอร์ เปิด Modal เว็บแคมกล้องหน้า/หลังผ่าน Web API
                 openWebcamModal();
             }
         }
@@ -573,7 +558,7 @@
                     video.srcObject = stream;
                 })
                 .catch(err => {
-                    alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบการอนุญาตใช้งานกล้อง: ' + err.message);
+                    alert('ไม่สามารถเข้าถึงกล้องได้: ' + err.message);
                     closeWebcamModal();
                 });
         }
@@ -591,10 +576,8 @@
             const canvas = document.getElementById('webcamCanvas');
             canvas.width = video.videoWidth || 1280;
             canvas.height = video.videoHeight || 720;
-            
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
             const base64Img = canvas.toDataURL('image/jpeg', 0.8);
             processAndStoreImage(base64Img);
             closeWebcamModal();
@@ -603,13 +586,10 @@
         function handleImageUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    processAndStoreImage(e.target.result);
-                }
+                reader.onload = function(e) { processAndStoreImage(e.target.result); }
                 reader.readAsDataURL(file);
             }
             event.target.value = '';
@@ -619,30 +599,17 @@
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                const MAX_HEIGHT = 800;
-                let width = img.width;
-                let height = img.height;
-
+                const MAX_WIDTH = 800, MAX_HEIGHT = 800;
+                let width = img.width, height = img.height;
                 if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                 } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                 }
-
-                canvas.width = width;
-                canvas.height = height;
+                canvas.width = width; canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                currentOrderImages.push(compressedBase64);
+                currentOrderImages.push(canvas.toDataURL('image/jpeg', 0.7));
                 renderImagePreviews();
             }
             img.src = dataUrl;
@@ -652,7 +619,6 @@
             const container = document.getElementById('imagePreviewContainer');
             if (!container) return;
             container.innerHTML = '';
-            
             const imagesJson = JSON.stringify(currentOrderImages).replace(/"/g, '&quot;');
             currentOrderImages.forEach((imgSrc, index) => {
                 const wrapper = document.createElement('div');
@@ -672,7 +638,6 @@
             renderImagePreviews();
         }
 
-        // --- ระบบ Lightbox เลื่อนดูรูปภาพ ---
         function openImageModal(imgSrcOrIndex, imageArray = null) {
             if (imageArray && Array.isArray(imageArray)) {
                 activeGalleryImages = imageArray;
@@ -688,20 +653,14 @@
 
         function updateLightboxView() {
             if (activeGalleryImages.length === 0) return;
-            
-            const currentSrc = activeGalleryImages[currentImageIndex];
-            document.getElementById('modalLargeImage').src = currentSrc;
+            document.getElementById('modalLargeImage').src = activeGalleryImages[currentImageIndex];
             document.getElementById('imageCounterBadge').innerText = `${currentImageIndex + 1} / ${activeGalleryImages.length}`;
-
             const prevBtn = document.getElementById('prevImageBtn');
             const nextBtn = document.getElementById('nextImageBtn');
-            
             if (activeGalleryImages.length <= 1) {
-                prevBtn.classList.add('hidden');
-                nextBtn.classList.add('hidden');
+                prevBtn.classList.add('hidden'); nextBtn.classList.add('hidden');
             } else {
-                prevBtn.classList.remove('hidden');
-                nextBtn.classList.remove('hidden');
+                prevBtn.classList.remove('hidden'); nextBtn.classList.remove('hidden');
             }
         }
 
@@ -719,11 +678,8 @@
             updateLightboxView();
         }
 
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.add('hidden');
-        }
+        function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); }
 
-        // รองรับคีย์บอร์ดซ้าย/ขวา และ ESC
         document.addEventListener('keydown', function(e) {
             const modal = document.getElementById('imageModal');
             if (modal && !modal.classList.contains('hidden')) {
@@ -733,9 +689,7 @@
             }
         });
 
-        // รองรับการปัดหน้าจอ (Touch Swipe) บนมือถือ
-        let touchStartX = 0;
-        let touchEndX = 0;
+        let touchStartX = 0, touchEndX = 0;
         document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
         document.addEventListener('touchend', e => {
             const modal = document.getElementById('imageModal');
@@ -746,24 +700,57 @@
             }
         });
 
+        // --- รูปแบบข้อความ LINE (แสดงเฉพาะรายการสินค้า จำนวน และราคา) ---
+        function generateLineSummaryText(order) {
+            let itemsText = "";
+            if (order.items && order.items.length > 0) {
+                order.items.forEach((item) => {
+                    const calc = calculateItem(item, order.vatType);
+                    itemsText += `• ${item.productName || '-'} | จำนวน: ${item.quantity || 0} ชิ้น | ราคา: ฿${calc.finalTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}\n`;
+                });
+            }
+            return `📦 *รายการสินค้า:*\n${itemsText.trim()}`;
+        }
+
+        function copyLineTextSummary() {
+            if (!currentViewOrderId) return;
+            const order = ordersData.find(o => o.id === currentViewOrderId);
+            if (!order) return;
+
+            const textToCopy = generateLineSummaryText(order);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showAlert('คัดลอกข้อความสรุปสำหรับส่ง LINE เรียบร้อยแล้ว!');
+                }).catch(err => {
+                    fallbackCopyText(textToCopy);
+                });
+            } else {
+                fallbackCopyText(textToCopy);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showAlert('คัดลอกข้อความสรุปสำหรับส่ง LINE เรียบร้อยแล้ว!');
+            } catch (err) {
+                alert('ไม่สามารถคัดลอกข้อความได้อัตโนมัติ');
+            }
+            document.body.removeChild(textarea);
+        }
+
         function claimOrder(id) {
             const order = ordersData.find(o => o.id === id);
             if (!order) return;
-
             order.assignee = currentUser ? currentUser.name : 'พนักงาน';
-            if (order.status === 'ยังไม่ได้ดำเนินการ') {
-                order.status = 'กำลังดำเนินการ';
-            }
-
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(order)
-            }).then(() => {
-                console.log('Claimed successfully');
-            }).catch(err => { console.error('Error:', err); });
-
+            if (order.status === 'ยังไม่ได้ดำเนินการ') { order.status = 'กำลังดำเนินการ'; }
+            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) }).catch(err => {});
             renderApp();
             showAlert(`คุณได้รับดูแลออร์เดอร์ของ ${order.customer} เรียบร้อยแล้ว`);
             editOrder(id);
@@ -774,13 +761,10 @@
             const unitSelling = item.sellingPrice || 0;
             const unitCost = item.costPrice || 0;
             const subtotal = unitSelling * qty;
-            
             const discountPercent = item.discountPercent || 0;
             const discountAmount = subtotal * (discountPercent / 100);
             const priceAfterDiscount = subtotal - discountAmount;
-            
-            let finalTotal = 0;
-            let vatAmount = 0;
+            let finalTotal = 0, vatAmount = 0;
             if (vatType === 'include') {
                 finalTotal = priceAfterDiscount;
                 vatAmount = finalTotal - (finalTotal / 1.07);
@@ -788,7 +772,6 @@
                 vatAmount = priceAfterDiscount * 0.07;
                 finalTotal = priceAfterDiscount + vatAmount;
             }
-            
             const totalCost = unitCost * qty;
             const netRevenueWithoutVat = vatType === 'include' ? (finalTotal / 1.07) : priceAfterDiscount;
             const profit = netRevenueWithoutVat - totalCost;
@@ -838,7 +821,6 @@
             });
 
             filtered = sortOrdersByQueue(filtered);
-
             updateKPIs(filtered);
             renderDesktopTable(filtered);
             renderMobileCards(filtered);
@@ -892,7 +874,7 @@
                                 <span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-md border border-indigo-100"><i class="fa-solid fa-user-tie mr-1"></i> ผู้ดูแล: ${order.assignee || 'ยังไม่ระบุ'}</span>
                                 <span class="bg-amber-50 text-amber-800 text-xs font-semibold px-2.5 py-0.5 rounded-md border border-amber-100"><i class="fa-solid fa-user-pen mr-1"></i> เซลล์: ${order.salesPerson || 'ยังไม่ระบุ'}</span>
                                 <span class="text-slate-500 text-xs"><i class="fa-regular fa-calendar ml-1 mr-1"></i> ${order.date ? order.date.replace('T', ' ') : '-'}</span>
-                                ${order.images && order.images.length > 0 ? '<span class="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-md border border-emerald-100"><i class="fa-solid fa-image mr-1"></i> มีรูปภาพ (' + order.images.length + ')</span>' : ''}
+                                ${order.images && order.images.length > 0 ? '<span class="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-md border border-emerald-100"><i class="fa-solid fa-image mr-1"></i> รูปภาพ (' + order.images.length + ')</span>' : ''}
                             </div>
                             <div class="flex items-center space-x-3 text-xs">
                                 ${claimBtnHtml}
@@ -1130,13 +1112,11 @@
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(order)
-            }).then(() => {
-                console.log('Confirmed successfully');
-            }).catch(err => { console.error('Error:', err); });
+            }).then(() => {}).catch(err => {});
 
             renderApp();
             closeViewModal();
-            showAlert(`ออร์เดอร์ของ ${order.customer} ถูก "ยืนยันออเดอร์" แล้ว พร้อมส่งต่อให้แผนกออกเอกสาร/เปิดบิลขาย`);
+            showAlert(`ออร์เดอร์ของ ${order.customer} ถูก "ยืนยันออเดอร์" แล้ว`);
             setTimeout(() => loadData(false), 1500);
         }
 
@@ -1230,16 +1210,13 @@
 
         function saveSaleOrder(event) {
             if (event) event.preventDefault();
-            
             try {
                 const editId = document.getElementById('editOrderId').value;
                 const rowElements = document.querySelectorAll('.item-row');
-
                 const items = [];
                 rowElements.forEach(row => {
                     const pNameElement = row.querySelector('.row-product-name');
                     const pName = pNameElement ? pNameElement.value : '';
-                    
                     if (pName.trim() !== '') {
                         items.push({
                             productName: pName,
@@ -1275,14 +1252,7 @@
                     images: currentOrderImages
                 };
 
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newOrder)
-                }).then(() => {
-                    console.log('Saved successfully');
-                }).catch(error => { console.error('Error:', error); });
+                fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newOrder) }).catch(error => {});
 
                 if (editId !== '') {
                     const index = ordersData.findIndex(o => o.id === editId);
@@ -1296,7 +1266,6 @@
                 renderApp();
                 closeModal();
                 setTimeout(() => loadData(false), 1500);
-
             } catch (err) {
                 alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message);
                 closeModal();
@@ -1354,13 +1323,7 @@
         function deleteOrderConfirmed() {
             if (deleteTargetId) {
                 const targetId = deleteTargetId;
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: "delete", id: targetId })
-                }).then(() => { console.log('Deleted successfully'); });
-
+                fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "delete", id: targetId }) }).catch(err => {});
                 ordersData = ordersData.filter(o => o.id !== targetId);
                 renderApp();
                 showAlert('ลบออร์เดอร์เรียบร้อยแล้ว');
