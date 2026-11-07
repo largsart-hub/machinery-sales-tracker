@@ -273,19 +273,20 @@
                         </div>
                     </div>
 
-                    <!-- ส่วนแนบรูปภาพ / เปิดกล้องถ่ายภาพ (แยก 2 ปุ่มชัดเจน) -->
+                    <!-- ส่วนแนบรูปภาพ / เปิดกล้องถ่ายภาพ (บังคับเปิดกล้องทันที) -->
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                         <label class="block text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
                             <i class="fa-solid fa-camera text-amber-500"></i>
-                            <span>รูปภาพประกอบออร์เดอร์ / สลิป (เลือกจากอัลบั้ม หรือ เปิดกล้องถ่ายทันที)</span>
+                            <span>รูปภาพประกอบออร์เดอร์ / สลิป (กดเปิดกล้องถ่าย หรือเลือกอัลบั้ม)</span>
                         </label>
                         <div class="flex flex-wrap items-center gap-2">
-                            <!-- ปุ่มเปิดกล้องถ่ายภาพโดยตรง -->
-                            <label class="cursor-pointer bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center space-x-2 shadow-sm">
+                            <!-- ปุ่มเปิดกล้องถ่ายภาพทันที (บังคับเปิดแอปกล้องมือถือ/เว็บบ์แคม) -->
+                            <button type="button" onclick="triggerDirectCamera()" class="cursor-pointer bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center space-x-2 shadow-sm">
                                 <i class="fa-solid fa-camera-retro"></i>
                                 <span>เปิดกล้องถ่ายรูป</span>
-                                <input type="file" id="orderCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
-                            </label>
+                            </button>
+                            <!-- Input ซ่อนสำหรับกล้องมือถือ -->
+                            <input type="file" id="orderCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
 
                             <!-- ปุ่มเลือกรูปจากแกลเลอรี/อัลบั้ม -->
                             <label class="cursor-pointer bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center space-x-2 shadow-sm">
@@ -316,6 +317,21 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal: WebCam Live View (สำหรับคอมพิวเตอร์หรือเบราว์เซอร์ที่ไม่มีกล้อง Native) -->
+    <div id="webcamModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl text-center">
+            <h3 class="font-bold text-lg text-slate-900">ถ่ายภาพด้วยกล้อง</h3>
+            <div class="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                <video id="webcamVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button type="button" onclick="closeWebcamModal()" class="w-1/2 py-3 rounded-2xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition">ยกเลิก</button>
+                <button type="button" onclick="captureWebcamImage()" class="w-1/2 py-3 rounded-2xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-600 transition shadow-lg shadow-amber-500/30">แชะ! ถ่ายภาพ</button>
+            </div>
+        </div>
+    </div>
+    <canvas id="webcamCanvas" class="hidden"></canvas>
 
     <!-- Modal: Delete Confirmation -->
     <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -376,6 +392,7 @@
 
         let activeGalleryImages = []; // เก็บรายการรูปทั้งหมดใน Lightbox
         let currentImageIndex = 0;    // ตำแหน่งรูปปัจจุบันใน Lightbox
+        let webcamStream = null;      // สตรีมกล้องเว็บแคมสำหรับคอมพิวเตอร์
 
         window.onload = function() {
             checkLoginSession();
@@ -530,6 +547,59 @@
             if (matchedCust) nameInput.value = matchedCust.name; 
         }
 
+        // --- ระบบเปิดกล้องถ่ายภาพทันที (รองรับทั้งมือถือและ PC) ---
+        function triggerDirectCamera() {
+            const cameraInput = document.getElementById('orderCameraInput');
+            // ตรวจสอบว่าเป็นมือถือหรืออุปกรณ์ที่รองรับ Native capture หรือไม่
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                // บนมือถือ สั่งคลิก input ที่มี capture="environment" เพื่อเปิดกล้องหลังทันที
+                cameraInput.click();
+            } else {
+                // บนคอมพิวเตอร์ เปิด Modal เว็บแคมกล้องหน้า/หลังผ่าน Web API
+                openWebcamModal();
+            }
+        }
+
+        function openWebcamModal() {
+            const modal = document.getElementById('webcamModal');
+            const video = document.getElementById('webcamVideo');
+            modal.classList.remove('hidden');
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+                .then(stream => {
+                    webcamStream = stream;
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    alert('ไม่สามารถเข้าถึงกล้องได้ กรุณาตรวจสอบการอนุญาตใช้งานกล้อง: ' + err.message);
+                    closeWebcamModal();
+                });
+        }
+
+        function closeWebcamModal() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            document.getElementById('webcamModal').classList.add('hidden');
+        }
+
+        function captureWebcamImage() {
+            const video = document.getElementById('webcamVideo');
+            const canvas = document.getElementById('webcamCanvas');
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const base64Img = canvas.toDataURL('image/jpeg', 0.8);
+            processAndStoreImage(base64Img);
+            closeWebcamModal();
+        }
+
         function handleImageUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -538,40 +608,44 @@
                 const file = files[i];
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                        currentOrderImages.push(compressedBase64);
-                        renderImagePreviews();
-                    }
-                    img.src = e.target.result;
+                    processAndStoreImage(e.target.result);
                 }
                 reader.readAsDataURL(file);
             }
             event.target.value = '';
+        }
+
+        function processAndStoreImage(dataUrl) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                currentOrderImages.push(compressedBase64);
+                renderImagePreviews();
+            }
+            img.src = dataUrl;
         }
 
         function renderImagePreviews() {
