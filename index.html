@@ -700,18 +700,14 @@
             }
         });
 
-        // --- รูปแบบข้อความ LINE (ราคาต่อหน่วยแบบยังไม่รวมแวท + ระบุท้ายราคารวมแวท/ไม่รวมแวท) ---
+        // --- รูปแบบข้อความ LINE (แสดงราคาขายต่อหน่วยตรงๆ ตามที่กรอก + ป้ายประเภท VAT) ---
         function generateLineSummaryText(order) {
             let itemsText = "";
             if (order.items && order.items.length > 0) {
                 order.items.forEach((item) => {
-                    // แปลงราคาขายต่อหน่วยให้เป็นราคาไม่รวมแวท
-                    let unitSellingWithoutVat = item.sellingPrice || 0;
-                    if (order.vatType === 'include') {
-                        unitSellingWithoutVat = (item.sellingPrice || 0) / 1.07;
-                    }
+                    const rawSellingPrice = item.sellingPrice || 0;
                     const vatLabel = order.vatType === 'include' ? 'รวมแวท' : 'ไม่รวมแวท';
-                    itemsText += `• ${item.productName || '-'} | จำนวน: ${item.quantity || 0} ชิ้น | ราคา: ฿${unitSellingWithoutVat.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${vatLabel})\n`;
+                    itemsText += `• ${item.productName || '-'} | จำนวน: ${item.quantity || 0} ชิ้น | ราคา: ฿${rawSellingPrice.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${vatLabel})\n`;
                 });
             }
             return `📦 *รายการสินค้า:*\n${itemsText.trim()}`;
