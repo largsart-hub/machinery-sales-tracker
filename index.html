@@ -51,7 +51,7 @@
                 </button>
             </form>
             <div class="text-center text-[11px] text-slate-400">
-                บริษัท มีนทองซัพพลายส์ จำกัด &copy; 2026
+                บริษัท มีนทองซัพพลายส์ จำกัด © 2026
             </div>
         </div>
     </div>
@@ -177,7 +177,7 @@
         </main>
 
         <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-center text-xs text-slate-400">
-            Machinery Sales & Quotation Tracker App &copy; 2026
+            Machinery Sales & Quotation Tracker App © 2026
         </footer>
     </div>
 
@@ -235,7 +235,12 @@
                             <input type="text" id="orderCustomer" list="customerListOptions" oninput="onCustomerSelect(this)" placeholder="พิมพ์ค้นหาชื่อลูกค้า..." required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <datalist id="customerListOptions"></datalist>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:col-span-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อไลน์กลุ่ม (Line Group)</label>
+                            <input type="text" id="orderCustomerLineGroup" list="lineGroupListOptions" oninput="onLineGroupSelect(this)" placeholder="พิมพ์ค้นหาชื่อไลน์กลุ่ม..." class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <datalist id="lineGroupListOptions"></datalist>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:col-span-3">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">ผู้ดูแลออร์เดอร์ (พนักงาน)</label>
                                 <input type="text" id="orderAssignee" readonly placeholder="ว่าง (กดรับงานทีหลัง)" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 focus:outline-none">
@@ -272,7 +277,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">เลขที่ใบสั่งขาย (SO)</label>
-                            <input type="text" id="orderSO" placeholder="SO6709" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="orderSO" oninput="checkSoStatus(this)" placeholder="SO6709 (ใส่แล้วสถานะเป็นสำเร็จ)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 
@@ -370,7 +375,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi9QNLjTNH4M8TYlSHfVnWkuQBVhcpKsy5MbgpRb_1mKt2cI_wO0pzgvBG_hKMGWNatw/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxykmkAub8NRAMZ4OX169mbSQO-R-jCjYuLwuvqCiQtYbZsEd4wpvYuATLQegglMcgpmg/exec"; 
         let ordersData = [];
         let globalCustomers = [];
         let globalUsers = [];
@@ -505,10 +510,12 @@
         function populateCustomerDropdowns() {
             const nameDatalist = document.getElementById('customerListOptions');
             const codeDatalist = document.getElementById('customerCodeListOptions');
+            const lineGroupDatalist = document.getElementById('lineGroupListOptions');
             if (!nameDatalist || !codeDatalist) return;
             
             nameDatalist.innerHTML = '';
             codeDatalist.innerHTML = '';
+            if (lineGroupDatalist) lineGroupDatalist.innerHTML = '';
 
             globalCustomers.forEach(cust => {
                 const nameOpt = document.createElement('option');
@@ -520,21 +527,57 @@
                 codeOpt.value = cust.code; 
                 codeOpt.setAttribute('data-name', cust.name); 
                 codeDatalist.appendChild(codeOpt);
+
+                if (cust.lineGroup && lineGroupDatalist) {
+                    const lineOpt = document.createElement('option');
+                    lineOpt.value = cust.lineGroup;
+                    lineOpt.setAttribute('data-code', cust.code);
+                    lineOpt.setAttribute('data-name', cust.name);
+                    lineGroupDatalist.appendChild(lineOpt);
+                }
             });
         }
 
         function onCustomerSelect(inputElement) {
             const val = inputElement.value.trim();
             const codeInput = document.getElementById('orderCustomerCode');
+            const lineGroupInput = document.getElementById('orderCustomerLineGroup');
             const matchedCust = globalCustomers.find(c => c.name && c.name.trim().toLowerCase() === val.toLowerCase());
-            if (matchedCust) codeInput.value = matchedCust.code; 
+            if (matchedCust) {
+                if (codeInput) codeInput.value = matchedCust.code || '';
+                if (lineGroupInput) lineGroupInput.value = matchedCust.lineGroup || '';
+            }
         }
 
         function onCustomerCodeSelect(inputElement) {
             const val = inputElement.value.trim();
             const nameInput = document.getElementById('orderCustomer');
+            const lineGroupInput = document.getElementById('orderCustomerLineGroup');
             const matchedCust = globalCustomers.find(c => c.code && c.code.trim().toLowerCase() === val.toLowerCase());
-            if (matchedCust) nameInput.value = matchedCust.name; 
+            if (matchedCust) {
+                if (nameInput) nameInput.value = matchedCust.name || '';
+                if (lineGroupInput) lineGroupInput.value = matchedCust.lineGroup || '';
+            }
+        }
+
+        function onLineGroupSelect(inputElement) {
+            const val = inputElement.value.trim();
+            const codeInput = document.getElementById('orderCustomerCode');
+            const nameInput = document.getElementById('orderCustomer');
+            const matchedCust = globalCustomers.find(c => c.lineGroup && c.lineGroup.trim().toLowerCase() === val.toLowerCase());
+            if (matchedCust) {
+                if (codeInput) codeInput.value = matchedCust.code || '';
+                if (nameInput) nameInput.value = matchedCust.name || '';
+            }
+        }
+
+        // ฟังก์ชันตรวจสอบเลข SO ถ้ามีการกรอก ให้เปลี่ยนสถานะเป็น "สำเร็จ" ทันที
+        function checkSoStatus(inputElement) {
+            const val = inputElement.value.trim();
+            const statusSelect = document.getElementById('orderStatus');
+            if (val !== '') {
+                if (statusSelect) statusSelect.value = 'สำเร็จ';
+            }
         }
 
         function triggerDirectCamera() {
@@ -619,7 +662,7 @@
             const container = document.getElementById('imagePreviewContainer');
             if (!container) return;
             container.innerHTML = '';
-            const imagesJson = JSON.stringify(currentOrderImages).replace(/"/g, '&quot;');
+            const imagesJson = JSON.stringify(currentOrderImages).replace(/"/g, '"');
             currentOrderImages.forEach((imgSrc, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white cursor-pointer';
@@ -700,7 +743,6 @@
             }
         });
 
-        // --- รูปแบบข้อความ LINE (แสดงราคาขายต่อหน่วยตรงๆ ตามที่กรอก + ป้ายประเภท VAT) ---
         function generateLineSummaryText(order) {
             let itemsText = "";
             if (order.items && order.items.length > 0) {
@@ -808,6 +850,7 @@
                 const matchStatus = statusFilter ? order.status === statusFilter : true;
                 const matchOrderInfo = (order.customerCode && order.customerCode.toLowerCase().includes(searchKeyword)) ||
                                        order.customer.toLowerCase().includes(searchKeyword) ||
+                                       (order.lineGroup && order.lineGroup.toLowerCase().includes(searchKeyword)) ||
                                        (order.assignee && order.assignee.toLowerCase().includes(searchKeyword)) ||
                                        (order.salesPerson && order.salesPerson.toLowerCase().includes(searchKeyword)) ||
                                        (order.qt && order.qt.toLowerCase().includes(searchKeyword)) ||
@@ -872,6 +915,7 @@
                             <div class="flex items-center space-x-3">
                                 <span class="bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-lg">${order.customerCode || 'N/A'}</span>
                                 <span class="font-bold text-slate-900">${order.customer}</span>
+                                <span class="text-xs text-emerald-700 font-semibold"><i class="fa-brands fa-line mr-1"></i>${order.lineGroup || '-'}</span>
                                 <span class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-md border border-indigo-100"><i class="fa-solid fa-user-tie mr-1"></i> ผู้ดูแล: ${order.assignee || 'ยังไม่ระบุ'}</span>
                                 <span class="bg-amber-50 text-amber-800 text-xs font-semibold px-2.5 py-0.5 rounded-md border border-amber-100"><i class="fa-solid fa-user-pen mr-1"></i> เซลล์: ${order.salesPerson || 'ยังไม่ระบุ'}</span>
                                 <span class="text-slate-500 text-xs"><i class="fa-regular fa-calendar ml-1 mr-1"></i> ${order.date ? order.date.replace('T', ' ') : '-'}</span>
@@ -984,6 +1028,7 @@
                             </div>
                             <h4 class="font-bold text-slate-900 mt-1">${order.customer}</h4>
                             <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                <span class="text-xs text-emerald-700 font-semibold"><i class="fa-brands fa-line mr-1"></i>${order.lineGroup || '-'}</span>
                                 <span class="bg-indigo-50 text-indigo-700 text-[11px] font-semibold px-2 py-0.5 rounded-md border border-indigo-100">ผู้ดูแล: ${order.assignee || 'ยังไม่ระบุ'}</span>
                                 <span class="bg-amber-50 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-md border border-amber-100">เซลล์: ${order.salesPerson || 'ยังไม่ระบุ'}</span>
                                 <span class="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded">VAT: ${order.vatType === 'include' ? 'รวม' : 'แยก'}</span>
@@ -1041,7 +1086,7 @@
 
             let imagesHtml = '';
             if (order.images && order.images.length > 0) {
-                const imagesJson = JSON.stringify(order.images).replace(/"/g, '&quot;');
+                const imagesJson = JSON.stringify(order.images).replace(/"/g, '"');
                 let imgList = order.images.map((img, idx) => `
                     <div onclick='openImageModal(${idx}, ${imagesJson})' class="w-20 h-20 rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-80 transition shadow-sm bg-white">
                         <img src="${img}" class="w-full h-full object-cover">
@@ -1049,7 +1094,7 @@
                 `).join('');
                 imagesHtml = `
                     <div class="space-y-2 pt-2">
-                        <h4 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5"><i class="fa-solid fa-image text-amber-500"></i><span>รูปภาพแนบ (${order.images.length} รูป - คลิกเพื่อดูสไลด์ภาพใหญ่)</span></h4>
+                        <h4 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5"><i class="fa-solid fa-image text-amber-500"></i><span>รูปภาพแนบ (${order.images.length} รูป)</span></h4>
                         <div class="flex flex-wrap gap-2">${imgList}</div>
                     </div>
                 `;
@@ -1068,6 +1113,7 @@
                     <div><span class="text-slate-500 block">รหัสลูกค้า</span><strong class="text-slate-900 text-sm">${order.customerCode || '-'}</strong></div>
                     <div><span class="text-slate-500 block">วันที่และเวลา</span><strong class="text-slate-900 text-sm">${order.date ? order.date.replace('T', ' ') : '-'}</strong></div>
                     <div class="col-span-2"><span class="text-slate-500 block">ชื่อลูกค้า</span><strong class="text-slate-900 text-sm">${order.customer}</strong></div>
+                    <div class="col-span-2"><span class="text-slate-500 block">ชื่อไลน์กลุ่ม (Line Group)</span><strong class="text-emerald-700 text-sm"><i class="fa-brands fa-line mr-1"></i>${order.lineGroup || '-'}</strong></div>
                     <div><span class="text-slate-500 block">ผู้ดูแลออร์เดอร์</span><strong class="text-indigo-600 text-sm">${order.assignee || 'ยังไม่ระบุ'}</strong></div>
                     <div><span class="text-slate-500 block">ชื่อเซลล์/ผู้สั่งงาน</span><strong class="text-amber-600 text-sm">${order.salesPerson || 'ยังไม่ระบุ'}</strong></div>
                     <div><span class="text-slate-500 block">ประเภท VAT</span><strong class="text-slate-900 text-sm">${order.vatType === 'include' ? 'ราคารวม VAT แล้ว' : 'แยก VAT ต่างหาก'}</strong></div>
@@ -1237,17 +1283,25 @@
                     return;
                 }
 
+                // ตรวจสอบช่อง SO ถ้ามีการกรอก ให้บังคับสถานะเป็น "สำเร็จ" อัตโนมัติ
+                const soVal = document.getElementById('orderSO').value.trim();
+                let statusVal = document.getElementById('orderStatus').value;
+                if (soVal !== '') {
+                    statusVal = 'สำเร็จ';
+                }
+
                 const newOrder = {
                     id: editId !== '' ? editId : 'ord-' + Date.now(),
                     date: document.getElementById('orderDate').value,
                     customerCode: document.getElementById('orderCustomerCode').value,
                     customer: document.getElementById('orderCustomer').value,
+                    lineGroup: document.getElementById('orderCustomerLineGroup')?.value || '',
                     assignee: document.getElementById('orderAssignee').value,
                     salesPerson: document.getElementById('orderSalesPerson').value,
                     qt: document.getElementById('orderQT').value,
                     po: document.getElementById('orderPO').value,
-                    so: document.getElementById('orderSO').value,
-                    status: document.getElementById('orderStatus').value,
+                    so: soVal,
+                    status: statusVal,
                     vatType: document.getElementById('orderVatType').value,
                     items: items,
                     images: currentOrderImages
@@ -1290,6 +1344,9 @@
 
             document.getElementById('orderCustomerCode').value = order.customerCode || '';
             document.getElementById('orderCustomer').value = order.customer;
+            if (document.getElementById('orderCustomerLineGroup')) {
+                document.getElementById('orderCustomerLineGroup').value = order.lineGroup || '';
+            }
             document.getElementById('orderAssignee').value = order.assignee || '';
             document.getElementById('orderSalesPerson').value = order.salesPerson || (currentUser ? currentUser.name : '');
             document.getElementById('orderQT').value = order.qt || '';
@@ -1377,8 +1434,7 @@
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background-color: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 12px; color: #334155; margin-bottom: 16px;">
                     <div><span style="color: #64748b; display: block; font-size: 10px;">รหัสลูกค้า</span><strong style="font-size: 13px; color: #0f172a;">${order.customerCode || '-'}</strong></div>
-                    <div><span style="color: #64748b; display: block; font-size: 10px;">ผู้ดูแล</span><strong style="font-size: 13px; color: #0f172a;">${order.assignee || '-'}</strong></div>
-                    <div><span style="color: #64748b; display: block; font-size: 10px;">เซลล์/ผู้สั่งงาน</span><strong style="font-size: 13px; color: #0f172a;">${order.salesPerson || '-'}</strong></div>
+                    <div><span style="color: #64748b; display: block; font-size: 10px;">ชื่อไลน์กลุ่ม</span><strong style="font-size: 13px; color: #0f172a;">${order.lineGroup || '-'}</strong></div>
                     <div style="grid-column: span 2;"><span style="color: #64748b; display: block; font-size: 10px;">ชื่อลูกค้า</span><strong style="font-size: 13px; color: #0f172a;">${order.customer}</strong></div>
                 </div>
                 <div style="margin-bottom: 16px;">
